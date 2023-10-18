@@ -10,12 +10,36 @@
         integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
     <script type="text/javascript">
         function validateForm() {
+            var name = document.getElementById("firstName");
+        var street = document.getElementById("street");
+        var city = document.getElementById("city");
+
+        // Regular expression to check for numbers or special characters
+        var pattern = /^[a-zA-Z\s]*$/;
+
+        if (!pattern.test(name.value.trim())) {
+            alert("First Name should only contain letters and spaces.");
+            return false;
+        }
+
+        if (!pattern.test(street.value.trim())) {
+            alert("Street should only contain letters and spaces.");
+            return false;
+        }
+
+        if (!pattern.test(city.value.trim())) {
+            alert("City should only contain letters and spaces.");
+            return false;
+        }
+
+            var name = document.getElementById("firstName");
             var pass = document.getElementById("password");
             var number=document.getElementById("mobileNumber");
             var numbervalue=number.value.trim();
             var email=document.getElementById("emailId");
             var emailvalue=email.value.trim();
             var passvalue = pass.value.trim();
+            var namevalue=naem.value.trim();
                var lowercase = /[a-z]/g;
                 var uppercase =/[A-Z]/g; 
                 var specialChars = /[!@#$%^&*()_+{}\[\]:;<>,.?~\\\/]/g;
@@ -24,7 +48,8 @@
                     alert("Number should be 10 digits");
                     return false;
                 }
-                else if(passvalue.match(lowercase) && passvalue.match(uppercase)  &&passvalue.match(specialChars)&&passvalue.length==6){
+                
+                else if(passvalue.match(lowercase) && passvalue.match(uppercase)  &&passvalue.match(specialChars)&&passvalue.length>6){
                     return true; 
                 }
                 else{ 
@@ -42,27 +67,27 @@
 <body>
 
     <div class="container">
-        <form onsubmit="return validateForm()" action="/sign_up" name="myForm" method="POST">
+        <form onsubmit="return validateForm()" action="/createuser" name="myForm" method="POST">
             <div class="mb-3">
                 <label>First Name</label>
-                <input type="text" id="firstName" name="firstName" required><br>
+                <input type="text" id="firstName" name="fname" required><br>
             </div>
             <div class="mb-3">
                 <label>last Name</label>
-                <input type="text" id="lastName" name="lastName"><br>
+                <input type="text" id="lastName" name="lname"><br>
             </div>
             <div class="mb-3">
                 <label>Mobile Number</label>
-                <input type="text" id="mobileNumber" name="mobileNumber" required><br>
+                <input type="text" id="mobileNumber" name="mob" required><br>
             </div>
             <div class="mb-3">
                 <label>Email Id</label>
-                <input type="email" id="emailId" name="emailId" required>
+                <input type="email" id="emailId" name="email" required>
             </div>
             <div class="mb-3">
                 <label>Address</label><br>
                 <label>Street</label>
-                <input type="text" id="street" name="street">
+                <input type="text" id="street" name="str">
             </div>
             <div class="mb-3">
                 <label>City</label>
@@ -70,21 +95,21 @@
             </div>
             <div class="mb-3">
                 <label>State</label>
-                <input type="text" id="state" name="state">
+                <input type="text" id="state" name="stat">
             </div>
             <div class="mb-3">
                 <label>Country</label>
-                <input type="text" id="country" name="country">
+                <input type="text" id="country" name="count">
                 <br>
             </div>
             <div class="mb-3">
                 <label>Login Id</label>
 
-                <input type="text" id="loginId" name="loginId">
+                <input type="text" id="loginId" name="login">
             </div>
             <div class="mb-3">
                 <label>Password</label>
-                <input type="text" id="password" name="password" class="formerror">
+                <input type="text" id="password" name="pass" class="formerror">
                 <div class="col-auto">
                     <span id="passwordHelpInline" class="form-text">
                         Must be 6 characters long, 1 Uppercase, 1 lowercase, 1 SpecialChars.

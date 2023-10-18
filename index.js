@@ -1,92 +1,180 @@
-var express = require("express");
-var bodyParser = require("body-parser");
-var mongoose = require("mongoose");
-const socketIO = require('socket.io');
-const http = require('http');
+const express = require("express");
+const bodyParser = require("body-parser");
+const { MongoClient } = require("mongodb");
+const { default: mongoose } = require("mongoose");
+const http = require("http");
+const session = require('express-session');
+
+const socketIo = require("socket.io");
 
 const app = express();
 const server = http.createServer(app);
-const io = socketIO(server, {
-    cors: {
-        origin: 'http://localhost:3000',
-    },
+const io = socketIo(server);
+const port = process.env.PORT || 6600;
+const uri =
+'mongodb+srv://Gaurav:SIw1X0RdfhZAhZS9@cluster0.epwf7bv.mongodb.net/mydb?retryWrites=true&w=majority&appName=AtlasApp'; 
+const usersInRoom = new Map();
+const client = new MongoClient(uri, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
 });
 
 app.use(bodyParser.json());
-app.use(express.static('public'));
-app.use(bodyParser.urlencoded({
-    extended: true
+app.use(express.json());
+app.use(session({
+  secret: 'your-secret-key', 
+  resave: false,
+  saveUninitialized: true,
 }));
 
-mongoose.connect('mongodb+srv://Gaurav:SIw1X0RdfhZAhZS9@cluster0.epwf7bv.mongodb.net/mydb?retryWrites=true&w=majority&appName=AtlasApp', {
-    useNewUrlParser: true,
-    useUnifiedTopology: true
-});
+app.use(express.static("public"));
+app.use(bodyParser.urlencoded({ extended: true }));
+mongoose.connect(
+    'mongodb+srv://Gaurav:SIw1X0RdfhZAhZS9@cluster0.epwf7bv.mongodb.net/mydb?retryWrites=true&w=majority&appName=AtlasApp'
+);
 
 var db = mongoose.connection;
+db.on("error", () => console.log("Error in connecting to the database"));
+db.once("open", () => {
+  console.log("Connected to the database");
+  
 
-db.on('error', () => console.log("Error in Connecting to Database"));
-db.once('open', () => console.log("Connected to Database"));
-
-app.post("/sign_up", (req, res) => {
-    var firstName = req.body.firstName;
-    var lastName = req.body.lastName;
-    var mobileNumber = req.body.mobileNumber;
-    var emailId = req.body.emailId;
-    var street = req.body.street;
+  app.post("/createuser", (req, res) => {
+    var fname = req.body.fname;
+    var lname = req.body.lname;
+    var email = req.body.email;
+    var mob = req.body.mob;
+    var pass = req.body.pass;
+    var str = req.body.str;
     var city = req.body.city;
-    var state = req.body.state;
-    var country = req.body.country;
-    var loginId = req.body.loginId;
-    var password = req.body.password;
-    var timeStamp = new Date;
+    var stat = req.body.stat;
+    var cont = req.body.cont;
+    var login = req.body.login;
+    var add = `${str}, ${city}, ${stat}, ${cont}`;
+    var date = new Date();
 
     var data = {
-        "firstName": firstName,
-        "lastName": lastName,
-        "mobileNumber": mobileNumber,
-        "emailId": emailId,
-        "street": street,
-        "city": city,
-        "state": state,
-        "country": country,
-        "loginId": loginId,
-        "password": password,
-        "timeStamp": timeStamp
-    }
+      fname: fname,
+      lname: lname,
+      mobile: mob,
+      Address: add,
+      email: email,
+      loginId: login,
+      password: pass,
+      createdAt: date,
+    };
 
-    db.collection('users').insertOne(data, { timeout: 5000 }, (err, collection) => {
-        if (err) {
-            throw err;
-        }
-        console.log("Record Inserted Successfully");
+    db.collection("users").insertOne(data, (err, collection) => {
+      if (err) {
+        console.error("Error inserting user data:", err);
+        res.status(500).send("Error inserting user data");
+        return;
+      }
+      const userId = collection.insertedId;
+      console.log(`User with ID ${userId} inserted into MongoDB`);
+      
+
+      
+      
+
+      
     });
+    io.on("connection", (socket) => {
+      console.log("A user connected");
+    
+    
+      socket.join("live_users")
+      var sock = socket.id;
+      usersInRoom.set(socket.id, { sock,email,fname  });
+      
+      console.log(usersInRoom)
+      io.sockets.in("live_users").emit('connectedRoom',Array.from(usersInRoom.values()));
+    
+      socket.on('disconnect', ()=>{
+        console.log("A user disconnected");
+        usersInRoom.delete(socket.id);
+      })
+    
+      
 
-    // Emit user data to the 'join' event
-    io.sockets.emit('join', {
-        emailId,
-        firstName,
-        socketId: req.body.socketId
     });
+    req.session.userEmail = email;
 
-    return res.redirect('display.html');
+
+    console.log("Record Inserted");
+
+    res.redirect("/data");
+  });
 });
+app.get('/user', async(req, res) => {
+  const email = req.query.email; 
 
-// Serve socket.io events
-io.on('connection', (socket) => {
-    console.log('A user connected');
+    
 
-    // Listen for disconnect event
-    socket.on('disconnect', () => {
-        console.log('A user disconnected');
+  const db = client.db(); 
+  const collection = db.collection("users"); 
+  const userEmail = req.session.userEmail;
+  
+  
+
+  try {
+    const users = await collection.findOne({ email: email }, (err, user) => {
+      if (err) {
+        console.error('Error fetching data from MongoDB:', err);
+        res.status(500).json({ error: 'Data fetch error' });
+        return;
+      }
+
+      client.close();
+
+      
+      res.json(user);
     });
-});
+    
+
+    res.json(users)
+    
+  } catch (err) {
+    console.error("Error fetching user data:", err);
+    res.status(500).send("Error fetching user data from MongoDB");
+  }
+  });
+
+
+
 
 app.get("/", (req, res) => {
-    res.set({
-        "Allow-access-Allow-Origin": '*'
-    });
-    return res.redirect('index.html');
-}).listen(3000);
+  res.set({ "Allow-access-Allow-Origin": "*" });
+  return res.redirect("index.html");
+});
 
-console.log("Listening on PORT 3000");
+app.set("view engine", "ejs");
+
+app.get("/data", async (req, res) => {
+  
+  const db = client.db(); 
+  const collection = db.collection("users"); 
+  const userEmail = req.session.userEmail;
+  
+  
+
+  try {
+    const users = await collection.find({}).toArray();
+    
+    
+
+    res.render("index", { users,userEmail});
+    
+  } catch (err) {
+    console.error("Error fetching user data:", err);
+    res.status(500).send("Error fetching user data from MongoDB");
+  }
+});
+
+
+
+
+
+server.listen(port, () => {
+  console.log(`Server listening on port ${port}`);
+});
