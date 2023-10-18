@@ -11,8 +11,7 @@
     <script type="text/javascript">
         function validateForm() {
             var name = document.getElementById("firstName");
-        var street = document.getElementById("street");
-        var city = document.getElementById("city");
+        
 
         // Regular expression to check for numbers or special characters
         var pattern = /^[a-zA-Z\s]*$/;
@@ -22,15 +21,9 @@
             return false;
         }
 
-        if (!pattern.test(street.value.trim())) {
-            alert("Street should only contain letters and spaces.");
-            return false;
-        }
+        
 
-        if (!pattern.test(city.value.trim())) {
-            alert("City should only contain letters and spaces.");
-            return false;
-        }
+         
 
             var name = document.getElementById("firstName");
             var pass = document.getElementById("password");

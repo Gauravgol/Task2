@@ -40,6 +40,7 @@ db.once("open", () => {
   
 
   app.post("/createuser", (req, res) => {
+    console.log("Received POST request to /createuser");
     var fname = req.body.fname;
     var lname = req.body.lname;
     var email = req.body.email;
